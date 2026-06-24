@@ -1,0 +1,16 @@
+{
+    "name": null,
+    "input_variables": [
+        "num",
+        "topic"
+    ],
+    "optional_variables": [],
+    "output_parser": null,
+    "partial_variables": {},
+    "metadata": null,
+    "tags": null,
+    "template": "{topic}\uc758 {num}\uac1c \uc54c\ub824\uc918",
+    "template_format": "f-string",
+    "validate_template": false,
+    "_type": "prompt"
+}

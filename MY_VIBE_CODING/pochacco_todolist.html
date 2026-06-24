@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <!-- 모바일 기기에서도 화면이 깨지지 않고 예쁘게 보이도록 설정합니다 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>포차코의 오늘 할 일 🐾</title>
+
+    <!-- 테일윈드 CSS (화면을 예쁘게 꾸며주는 도구)를 불러옵니다 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 아이콘(휴지통, 플러스 모양, 화살표 등)을 사용하기 위해 폰트어썸을 불러옵니다 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- 귀엽고 둥글둥글한 글씨체(Jua, Gowun Dodum 폰트)를 구글 웹폰트에서 가져옵니다 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+
+    <style>
+        /* 전반적인 글씨체와 스크롤바, 귀여운 테마 스타일을 정의합니다 */
+        body {
+            font-family: 'Gowun Dodum', sans-serif;
+            background-color: #F3FBF7; /* 부드러운 파스텔톤 초록/민트빛 배경색 */
+        }
+        
+        /* 포인트가 되는 큰 제목과 강조 텍스트에는 둥글둥글한 Jua 폰트를 씁니다 */
+        .cute-font {
+            font-family: 'Jua', sans-serif;
+        }
+
+        /* 칠판이나 스티커 느낌의 입체적이고 귀여운 그림자 효과입니다 */
+        .cute-shadow {
+            box-shadow: 0 8px 0px #333333;
+        }
+
+        .cute-shadow-sm {
+            box-shadow: 0 4px 0px #333333;
+        }
+
+        /* 입력창이나 카드의 테두리를 진하게 그려 만화책 같은 개성 있는 느낌을 줍니다 */
+        .cartoon-border {
+            border: 4px solid #333333;
+        }
+
+        .cartoon-border-sm {
+            border: 2px solid #333333;
+        }
+
+        /* 스크롤바 디자인도 파스텔톤으로 귀엽게 꾸며줍니다 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F3FBF7;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #B2EBF2;
+            border-radius: 10px;
+        }
+
+        /* 체크박스 애니메이션 및 완료된 일에 줄긋기 스타일 */
+        .todo-checkbox:checked + .todo-text {
+            color: #9CA3AF;
+            text-decoration: line-through;
+            text-decoration-color: #FF8A8A;
+            text-decoration-thickness: 3px;
+        }
+
+        /* 폭죽이 터지는 파티클 효과용 캔버스 */
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 99;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- 파티클 효과용 캔버스 (할 일을 마쳤을 때 축하 폭죽이 터져요!) -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- 메인 할 일 카드 구역 -->
+    <main class="w-full max-w-md bg-[#FFFEEF] cartoon-border rounded-[32px] p-6 cute-shadow my-6 relative overflow-hidden">
+        
+        <!-- 상단 포차코 마스코트 영역 -->
+        <div class="flex flex-col items-center mb-4">
+            <!-- 직접 코딩으로 그려낸 귀여운 포차코 캐릭터 (SVG) -->
+            <div class="relative w-36 h-36 transform hover:scale-110 transition-transform duration-300 cursor-pointer" onclick="winkPochacco()">
+                <svg id="pochacco-svg" viewBox="0 0 200 200" class="w-full h-full">
+                    <!-- 몸통 (빨간 옷) -->
+                    <path d="M70,140 L130,140 Q145,185 120,185 L80,185 Q55,185 70,140 Z" fill="#FF8A8A" stroke="#333" stroke-width="5" />
+                    <!-- 흰색 소매/팔 -->
+                    <circle cx="65" cy="155" r="10" fill="#FFFFFF" stroke="#333" stroke-width="4" />
+                    <circle cx="135" cy="155" r="10" fill="#FFFFFF" stroke="#333" stroke-width="4" />
+                    
+                    <!-- 머리카락 3가닥 (포차코의 핵심 매력 포인트!) -->
+                    <path d="M100,32 Q102,20 105,20" stroke="#333" stroke-width="5" stroke-linecap="round" fill="none" />
+                    <path d="M95,34 Q90,24 93,24" stroke="#333" stroke-width="5" stroke-linecap="round" fill="none" />
+                    <path d="M105,34 Q112,24 110,24" stroke="#333" stroke-width="5" stroke-linecap="round" fill="none" />
+
+                    <!-- 귀여운 귀 (왼쪽 귀, 오른쪽 귀) -->
+                    <path d="M45,60 C25,60 25,110 42,110 C55,110 55,75 45,60 Z" fill="#333" stroke="#333" stroke-width="5" />
+                    <path d="M155,60 C175,60 175,110 158,110 C145,110 145,75 155,60 Z" fill="#333" stroke="#333" stroke-width="5" />
+
+                    <!-- 얼굴 중심 구체 -->
+                    <rect x="52" y="38" width="96" height="90" rx="45" fill="#FFFFFF" stroke="#333" stroke-width="5" />
+
+                    <!-- 왼쪽 눈, 오른쪽 눈 -->
+                    <ellipse id="left-eye" cx="82" cy="85" rx="5" ry="7" fill="#333" />
+                    <ellipse id="right-eye" cx="118" cy="85" rx="5" ry="7" fill="#333" />
+
+                    <!-- 말랑말랑 핑크색 볼터치 -->
+                    <circle cx="68" cy="100" r="10" fill="#FFC6FF" opacity="0.9" />
+                    <circle cx="132" cy="100" r="10" fill="#FFC6FF" opacity="0.9" />
+
+                    <!-- 까맣고 둥근 코 -->
+                    <ellipse cx="100" cy="92" rx="7" ry="4" fill="#333" />
+
+                    <!-- 앙다문 입 -->
+                    <path d="M95,102 Q100,105 105,102" stroke="#333" stroke-width="4" stroke-linecap="round" fill="none" />
+                </svg>
+            </div>
+
+            <!-- 포차코의 대화창 (말풍선) -->
+            <div class="relative bg-white cartoon-border-sm rounded-2xl py-2 px-4 mt-2 max-w-[280px] cute-shadow-sm transition-all duration-300">
+                <!-- 말풍선 꼬리 -->
+                <div class="absolute -top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white border-t-2 border-l-2 border-[#333] rotate-45"></div>
+                <p id="speech-bubble" class="text-xs font-bold text-[#37474F] text-center relative z-10">
+                    안녕! 날짜를 골라 계획을 세워볼까? 🐾
+                </p>
+            </div>
+        </div>
+
+        <!-- 달력 접기/열기 토글 버튼 -->
+        <button 
+            onclick="toggleCalendar()" 
+            class="w-full bg-[#E8F5E9] hover:bg-[#C8E6C9] cartoon-border-sm rounded-2xl py-2.5 px-4 mb-4 text-[#2E7D32] font-bold transition-all flex items-center justify-center gap-2 cute-shadow-sm text-sm"
+        >
+            <i class="fa-solid fa-calendar-days text-base"></i>
+            <span id="calendar-toggle-text">📅 달력 닫기</span>
+        </button>
+
+        <!-- 달력 영역 (기본적으로 펼쳐져 있음) -->
+        <div id="calendar-container" class="bg-white cartoon-border-sm rounded-2xl p-4 mb-4 transition-all duration-300">
+            <!-- 달력 머리글 (월 이동 버튼 및 년/월 표시) -->
+            <div class="flex items-center justify-between mb-4">
+                <button 
+                    onclick="moveMonth(-1)" 
+                    class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center cartoon-border-sm active:translate-y-0.5 transition-all text-xs"
+                    title="이전 달"
+                >
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <span id="calendar-title" class="cute-font text-base text-[#37474F]">2026년 6월</span>
+                <button 
+                    onclick="moveMonth(1)" 
+                    class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center cartoon-border-sm active:translate-y-0.5 transition-all text-xs"
+                    title="다음 달"
+                >
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+
+            <!-- 요일 표시줄 -->
+            <div class="grid grid-cols-7 gap-1 text-center text-xs font-bold mb-2 text-gray-500">
+                <span class="text-red-500">일</span>
+                <span>월</span>
+                <span>화</span>
+                <span>수</span>
+                <span>목</span>
+                <span>금</span>
+                <span class="text-blue-500">토</span>
+            </div>
+
+            <!-- 날짜들이 나타날 공간 -->
+            <div id="calendar-days" class="grid grid-cols-7 gap-1 text-center font-bold text-sm">
+                <!-- 자바스크립트로 일별 버튼 생성 예정 -->
+            </div>
+        </div>
+
+        <!-- 현재 선택된 날짜 타이틀 & 할 일 개수 -->
+        <div class="bg-[#E0F7FA] cartoon-border-sm rounded-2xl p-3 mb-4 flex justify-between items-center">
+            <div class="flex flex-col">
+                <span class="text-[10px] text-teal-600 font-bold uppercase tracking-wider">Selected Date</span>
+                <span id="selected-date-text" class="cute-font text-base text-[#006064]">🐾 2026년 06월 22일</span>
+            </div>
+            <div class="bg-[#00BCD4] cartoon-border-sm text-white px-3 py-1 rounded-full text-xs cute-font">
+                <span id="remaining-count">0</span>개 남음
+            </div>
+        </div>
+
+        <!-- 할 일 입력 영역 (폼) -->
+        <form id="todo-form" class="flex gap-2 mb-4" onsubmit="event.preventDefault(); addTodo();">
+            <input 
+                type="text" 
+                id="todo-input" 
+                placeholder="오늘 할 일은 무엇인가요?" 
+                class="flex-1 px-4 py-3 rounded-2xl cartoon-border-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#80DEEA] text-sm placeholder-gray-400 font-bold"
+                maxlength="30"
+            >
+            <button 
+                type="submit" 
+                class="bg-[#FFE082] hover:bg-[#FFD54F] active:translate-y-1 cartoon-border-sm rounded-2xl px-4 py-3 font-bold text-[#37474F] transition-all cute-shadow-sm flex items-center justify-center gap-1"
+            >
+                <i class="fa-solid fa-plus text-base"></i>
+                <span class="cute-font text-sm hidden sm:inline">추가</span>
+            </button>
+        </form>
+
+        <!-- 할 일 목록 영역 -->
+        <div class="space-y-3 max-h-[250px] overflow-y-auto pr-1" id="todo-list">
+            <!-- 자바스크립트를 통해 여기에 날짜별 할 일 카드가 동적으로 생겨납니다 -->
+        </div>
+
+        <!-- 할 일이 하나도 없을 때 보여주는 귀여운 메시지 구역 -->
+        <div id="empty-state" class="hidden flex flex-col items-center justify-center py-6 text-center">
+            <i class="fa-solid fa-paw text-3xl text-amber-200 mb-2"></i>
+            <p class="font-bold text-sm text-[#78909C]">이 날은 할 일이 비어있어요.</p>
+            <p class="text-[11px] text-[#90A4AE] mt-0.5">새로운 계획을 세워 볼까요?</p>
+        </div>
+    </main>
+
+    <!-- 경고창(alert) 대신 화면 아래쪽에 귀엽게 나오는 알림 메시지 상자 -->
+    <div id="toast" class="fixed bottom-8 bg-[#FFCDD2] cartoon-border-sm rounded-full py-3 px-6 cute-shadow-sm font-bold text-sm text-[#7F0000] opacity-0 pointer-events-none transition-all duration-300 transform translate-y-4 z-50">
+        📝 할 일을 먼저 써주세요!
+    </div>
+
+    <!-- 하단 라이선스 및 푸터 정보 -->
+    <footer class="text-center text-xs text-[#78909C] mt-2">
+        <p>🐾 Pochacco Calendar Todo • 귀여운 계획을 세워보아요!</p>
+    </footer>
+
+    <!-- 자바스크립트 로직 시작 -->
+    <script>
+        // 1. 필요한 HTML 태그 요소를 자바스크립트 변수로 연결합니다.
+        const todoInput = document.getElementById('todo-input');
+        const todoList = document.getElementById('todo-list');
+        const remainingCount = document.getElementById('remaining-count');
+        const speechBubble = document.getElementById('speech-bubble');
+        const emptyState = document.getElementById('empty-state');
+        const toast = document.getElementById('toast');
+        const rightEye = document.getElementById('right-eye');
+        
+        const calendarContainer = document.getElementById('calendar-container');
+        const calendarToggleText = document.getElementById('calendar-toggle-text');
+        const calendarTitle = document.getElementById('calendar-title');
+        const calendarDays = document.getElementById('calendar-days');
+        const selectedDateText = document.getElementById('selected-date-text');
+
+        // 포차코가 해줄 귀여운 메시지 목록입니다.
+        const speechTexts = {
+            welcome: "안녕! 날짜를 골라 계획을 세워볼까? 🐾",
+            add: "새로운 할 일을 계획표에 적었어! 꼭 해내자! 🐶",
+            complete: "와아! 정말 대단해! 끝낸 기분은 어때? ✨",
+            delete: "깨끗하게 지웠어! 다음 일도 파이팅! 😉",
+            allDone: "야호! 오늘 계획한 일을 다 끝냈어! 너가 최고야! 🏆",
+            wink: "포차코와 눈을 마주쳤네! 기분 좋은 일만 가득할 거야! 🌟",
+            changeDate: "날짜 모험을 시작해볼까? 마음에 쏙 드는 날을 골라봐! 📅"
+        };
+
+        // 2. 현재 날짜 상태 관리 (달력 탐색용 및 선택한 날짜)
+        let today = new Date(); // 오늘 컴퓨터의 진짜 날짜
+        let currentYear = today.getFullYear();  // 달력에 표시할 기준 연도
+        let currentMonth = today.getMonth();    // 달력에 표시할 기준 월 (0=1월, 11=12월)
+        
+        // 사용자가 최종적으로 선택한 날짜 (초기값: 오늘 날짜인 YYYY-MM-DD 형태)
+        let selectedDate = getFormattedDate(today.getFullYear(), today.getMonth() + 1, today.getDate());
+
+        // 3. 사용자가 저장한 할 일 목록을 불러옵니다.
+        let todos = JSON.parse(localStorage.getItem('pochacco_todos_with_date')) || [];
+
+        // [하위 호환 기능] 혹시 이전에 날짜 없이 작성해 둔 옛날 데이터가 있다면 전부 오늘 날짜로 편입시킵니다.
+        let oldTodos = JSON.parse(localStorage.getItem('pochacco_todos')) || [];
+        if (oldTodos.length > 0) {
+            oldTodos.forEach(item => {
+                todos.push({
+                    id: item.id || Date.now(),
+                    date: selectedDate, // 과거의 할 일은 모두 오늘 날짜로 일괄 변경
+                    text: item.text,
+                    completed: item.completed || false
+                });
+            });
+            // 변환을 다 마쳤으므로 옛날 데이터 저장소는 비워줍니다.
+            localStorage.removeItem('pochacco_todos');
+            saveTodos();
+        }
+
+        // 4. 앱 시작 시 한 번 화면과 달력을 그려줍니다.
+        updateUI();
+
+        // 5. 날짜 형태를 0000-00-00 형태의 글자로 만들어주는 고마운 함수
+        function getFormattedDate(year, month, day) {
+            const formattedMonth = String(month).padStart(2, '0');
+            const formattedDay = String(day).padStart(2, '0');
+            return `${year}-${formattedMonth}-${formattedDay}`;
+        }
+
+        // 6. 달력 펼치고 닫는 함수
+        let isCalendarOpen = true;
+        function toggleCalendar() {
+            isCalendarOpen = !isCalendarOpen;
+            if (isCalendarOpen) {
+                calendarContainer.classList.remove('hidden');
+                calendarToggleText.innerText = "📅 달력 닫기";
+            } else {
+                calendarContainer.classList.add('hidden');
+                calendarToggleText.innerText = "📅 달력 열기";
+            }
+        }
+
+        // 7. 달력 그리기 핵심 로직
+        function renderCalendar() {
+            calendarDays.innerHTML = "";
+            
+            // 타이틀 부분 연도 및 월 갱신
+            calendarTitle.innerText = `${currentYear}년 ${currentMonth + 1}월`;
+
+            // 이번 달 1일이 무슨 요일인지 알아내서 앞쪽 빈칸 공간을 채웁니다. (0=일요일, 6=토요일)
+            const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
+            // 이번 달 총 일수 계산 (예: 30일, 31일)
+            const totalDays = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+            // 1일 시작 전 비어있는 칸 그리기
+            for (let i = 0; i < firstDayIndex; i++) {
+                const emptyCell = document.createElement('div');
+                calendarDays.appendChild(emptyCell);
+            }
+
+            // 1일부터 마지막 날까지 숫자 칸 그리기
+            for (let day = 1; day <= totalDays; day++) {
+                const dayButton = document.createElement('button');
+                const thisDateStr = getFormattedDate(currentYear, currentMonth + 1, day);
+                
+                // 요일별 글자색 계산 (일요일 빨간색, 토요일 파란색)
+                const dayOfWeek = new Date(currentYear, currentMonth, day).getDay();
+                let textColorClass = "text-gray-700";
+                if (dayOfWeek === 0) textColorClass = "text-red-500";
+                if (dayOfWeek === 6) textColorClass = "text-blue-500";
+
+                // 버튼 내부에 날짜 숫자와 밑에 점이 찍힐 컨테이너를 함께 구성합니다.
+                dayButton.className = `h-11 flex flex-col items-center justify-center rounded-xl border border-transparent transition-all active:scale-95 text-xs font-bold ${textColorClass}`;
+                
+                // 현재 요일이 사용자가 '선택한 날짜'라면 밝고 예쁜 민트색 동그라미로 칠해줍니다.
+                if (thisDateStr === selectedDate) {
+                    dayButton.className = "h-11 flex flex-col items-center justify-center rounded-xl bg-[#00BCD4] text-white border-2 border-[#333] active:scale-95 text-xs font-bold cute-shadow-sm scale-105 z-10";
+                } else {
+                    dayButton.className += " hover:bg-amber-100 hover:border-gray-300";
+                }
+
+                // 해당 날짜에 완료하지 않았거나 남아있는 할 일이 있는지 탐색합니다.
+                const dayTasks = todos.filter(todo => todo.date === thisDateStr);
+                const hasTasks = dayTasks.length > 0;
+                const isAllDone = hasTasks && dayTasks.every(todo => todo.completed);
+
+                // 날짜 번호 넣기
+                let dayHTML = `<span>${day}</span>`;
+                
+                // 해당 날짜에 할 일이 있다면 작은 귀여운 알림 점을 찍어줍니다.
+                if (hasTasks) {
+                    if (isAllDone) {
+                        // 모두 다 완료한 날은 초록색 체크 점
+                        dayHTML += `<span class="w-1.5 h-1.5 rounded-full bg-[#4CAF50] mt-0.5"></span>`;
+                    } else {
+                        // 완료할 게 남은 날은 따뜻한 핑크색 중요 점
+                        dayHTML += `<span class="w-1.5 h-1.5 rounded-full bg-[#FF8A8A] mt-0.5"></span>`;
+                    }
+                } else {
+                    // 할 일이 없는 날도 구색이 맞게 빈 공간 유지
+                    dayHTML += `<span class="w-1.5 h-1.5 mt-0.5 opacity-0">•</span>`;
+                }
+
+                dayButton.innerHTML = dayHTML;
+                dayButton.onclick = () => selectDate(thisDateStr);
+                
+                calendarDays.appendChild(dayButton);
+            }
+        }
+
+        // 8. 달력에서 특정 날짜를 클릭했을 때 실행되는 함수
+        function selectDate(dateString) {
+            selectedDate = dateString;
+            
+            // 날짜 텍스트를 한글로 가독성 좋게 포맷합니다.
+            const [y, m, d] = dateString.split('-');
+            selectedDateText.innerText = `🐾 ${y}년 ${m}월 ${d}일`;
+
+            // UI 갱신 및 말풍선 멘트 출력
+            updateUI();
+            speak(speechTexts.changeDate);
+        }
+
+        // 9. 이전 달 / 다음 달 이동 단추
+        function moveMonth(direction) {
+            currentMonth += direction;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            } else if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            renderCalendar();
+        }
+
+        // 10. 할 일 추가하기 함수
+        function addTodo() {
+            const taskText = todoInput.value.trim(); // 글자 양쪽 공백 제거
+
+            // 아무것도 안 적었다면 알림 토스트를 띄웁니다.
+            if (taskText === "") {
+                showToast("📝 할 일을 먼저 입력해 줘!");
+                return;
+            }
+
+            const newTodo = {
+                id: Date.now(), // 고유한 ID 값 부여
+                date: selectedDate, // ★ 현재 선택된 날짜에 할 일을 묶어 등록합니다.
+                text: taskText,
+                completed: false
+            };
+
+            todos.push(newTodo);
+            
+            todoInput.value = "";
+            todoInput.focus();
+
+            saveTodos();
+            updateUI();
+
+            speak(speechTexts.add);
+        }
+
+        // 11. 할 일 완료 상태 켜고 끄기 함수
+        function toggleTodo(id) {
+            todos = todos.map(todo => {
+                if (todo.id === id) {
+                    const nextState = !todo.completed;
+                    
+                    // 완료 처리 시 축하용 가루 폭죽 발동
+                    if (nextState === true) {
+                        triggerConfetti();
+                        speak(speechTexts.complete);
+                    }
+                    return { ...todo, completed: nextState };
+                }
+                return todo;
+            });
+
+            saveTodos();
+            updateUI();
+
+            // 선택한 날짜의 할 일이 완수되었는지 체크합니다.
+            checkAllDoneForSelectedDate();
+        }
+
+        // 12. 할 일 삭제하기 함수
+        function deleteTodo(id) {
+            todos = todos.filter(todo => todo.id !== id);
+            
+            saveTodos();
+            updateUI();
+            
+            speak(speechTexts.delete);
+        }
+
+        // 13. 전체 UI 새로고침 기능 함수
+        function updateUI() {
+            todoList.innerHTML = "";
+
+            // 현재 선택한 날짜에 등록된 할 일만 따로 모읍니다.
+            const filteredTodos = todos.filter(todo => todo.date === selectedDate);
+
+            // 해당 날짜에 할 일이 하나도 없을 때
+            if (filteredTodos.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                
+                // 날짜에 맞는 일들만 화면에 리스트 카드로 추가해 줍니다.
+                filteredTodos.forEach(todo => {
+                    const todoItem = document.createElement('div');
+                    todoItem.className = `flex items-center justify-between p-3 rounded-2xl bg-white cartoon-border-sm cute-shadow-sm transition-all duration-200 ${
+                        todo.completed ? 'opacity-85 bg-[#E8F5E9] border-gray-400' : 'hover:scale-[1.01]'
+                    }`;
+
+                    todoItem.innerHTML = `
+                        <label class="flex items-center gap-3 cursor-pointer flex-1 select-none">
+                            <input 
+                                type="checkbox" 
+                                class="todo-checkbox hidden" 
+                                ${todo.completed ? 'checked' : ''} 
+                                onchange="toggleTodo(${todo.id})"
+                            >
+                            <div class="w-6.5 h-6.5 rounded-full border-2 border-[#333] flex items-center justify-center transition-all ${
+                                todo.completed ? 'bg-[#A8E6CF]' : 'bg-white'
+                            }">
+                                ${todo.completed ? '<i class="fa-solid fa-check text-[#333] text-xs"></i>' : ''}
+                            </div>
+                            <span class="todo-text font-bold text-[#37474F] text-sm break-all ${
+                                todo.completed ? 'line-through text-gray-400' : ''
+                            }">
+                                ${todo.text}
+                            </span>
+                        </label>
+                        <button 
+                            onclick="deleteTodo(${todo.id})" 
+                            class="w-8 h-8 bg-[#FF8A8A] hover:bg-[#FF5252] text-white rounded-full border-2 border-[#333] flex items-center justify-center transition-all active:scale-95 cute-shadow-sm"
+                            title="삭제하기"
+                        >
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    `;
+                    todoList.appendChild(todoItem);
+                });
+            }
+
+            // 선택한 날짜에 해야 할 일 중 남아있는 일의 총개수를 세어줍니다.
+            const incompleteCount = filteredTodos.filter(todo => !todo.completed).length;
+            remainingCount.innerText = incompleteCount;
+
+            // 달력의 상황 표시 점들을 올바르게 고치기 위해 다시 렌더링합니다.
+            renderCalendar();
+        }
+
+        // 14. 로컬 스토리지에 변경된 내역을 영구 보존하는 함수
+        function saveTodos() {
+            localStorage.setItem('pochacco_todos_with_date', JSON.stringify(todos));
+        }
+
+        // 15. 포차코 대화 멘트 변경 기능
+        function speak(text) {
+            speechBubble.innerText = text;
+        }
+
+        // 16. 포차코 클릭 시 깜찍하게 윙크해 주는 기능
+        function winkPochacco() {
+            speak(speechTexts.wink);
+            rightEye.setAttribute('ry', '1');
+            rightEye.setAttribute('rx', '6');
+            
+            setTimeout(() => {
+                rightEye.setAttribute('ry', '7');
+                rightEye.setAttribute('rx', '5');
+            }, 400);
+        }
+
+        // 17. 선택한 특정 날짜의 할 일이 모두 달성되었는지 검출하는 함수
+        function checkAllDoneForSelectedDate() {
+            const filteredTodos = todos.filter(todo => todo.date === selectedDate);
+            if (filteredTodos.length > 0 && filteredTodos.every(todo => todo.completed)) {
+                setTimeout(() => {
+                    speak(speechTexts.allDone);
+                    // 폭죽 연쇄 3연타 효과
+                    for (let i = 0; i < 3; i++) {
+                        setTimeout(triggerConfetti, i * 300);
+                    }
+                }, 300);
+            }
+        }
+
+        // 18. 알림 토스트 팝업 띄우기 함수
+        function showToast(message) {
+            toast.innerText = message;
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateY(0)';
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(16px)';
+            }, 2500);
+        }
+
+
+        // ==========================================
+        //  순수 자바스크립트로 구현한 파스텔 폭죽(Confetti) 로직
+        // ==========================================
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 8 + 6;
+                this.speedX = Math.random() * 12 - 6;
+                this.speedY = Math.random() * -12 - 4;
+                const colors = ['#FFC6FF', '#BDB2FF', '#CAFFBF', '#FDFFB6', '#FFADAD', '#9BF6FF'];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.gravity = 0.3;
+                this.life = 100;
+            }
+
+            update() {
+                this.speedY += this.gravity;
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.life -= 2;
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function triggerConfetti() {
+            const startX = window.innerWidth / 2;
+            const startY = window.innerHeight * 0.7;
+            for (let i = 0; i < 40; i++) {
+                particles.push(new Particle(startX, startY));
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles = particles.filter(p => p.life > 0);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+    </script>
+</body>
+</html>
